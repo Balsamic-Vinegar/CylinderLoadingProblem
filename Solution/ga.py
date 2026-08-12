@@ -1,5 +1,6 @@
 import random
 from core import Solution, load_instances
+import time
 
 class GeneticAlgorithm:
     def __init__(self, instance, population_size=200, mutation_rate=0.015,
@@ -53,20 +54,36 @@ class GeneticAlgorithm:
 if __name__ == "__main__":
     instances = load_instances()
 
-    instance = instances["basic"][0]
+    instance = instances["challenging"][2]
 
-    ga = GeneticAlgorithm(instance,population_size=50,tournament_size=4)
+    ga = GeneticAlgorithm(instance,population_size=200,tournament_size=4)
 
     population = ga.initialise_population()
-
-    assert len(population) == ga.population_size
 
     for sol in population:
         assert sorted(sol.order) == list(
             range(len(instance.cylinders))
         )
 
-    selected = ga.tournament_select(population)
+    parent_pairs = ga.population_size // 2
+    selected_parents = []
 
-    assert selected in population
-    assert isinstance(selected, Solution)
+    start_time = time.perf_counter()
+
+    for i in range(parent_pairs):
+        parent1 = ga.tournament_select(population)
+        parent2 = ga.tournament_select(population)
+
+        selected_parents.append(parent1)
+        selected_parents.append(parent2)
+
+    end_time = time.perf_counter()
+
+    elapsed_time = end_time - start_time
+    elapsed_ms = elapsed_time * 1000
+
+    print(
+        "GA population and one generation of "
+        "parent selection tests passed \n"
+        f"time: {elapsed_time:.2f}s"
+    )

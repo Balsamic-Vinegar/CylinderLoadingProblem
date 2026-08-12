@@ -65,12 +65,13 @@ class Solution:
         else:
             self.placements = placements
 
+        self._cached_fitness = None
+
     def fitness(self, instance):
-        fitness, placements = evaluate_solution(self.order,instance)
+        if self._cached_fitness is None:
+            self._cached_fitness, self.placements = evaluate_solution(self.order, instance)
 
-        self.placements = placements
-
-        return fitness
+        return self._cached_fitness
 
 
 def load_instances():
@@ -248,7 +249,7 @@ def greedy_random(instance, trials=50):
     best_order = None
     best_placements = None
 
-    for _ in range(trials):
+    for i in range(trials):
         order = list(range(len(instance.cylinders)))
 
         random.shuffle(order)
