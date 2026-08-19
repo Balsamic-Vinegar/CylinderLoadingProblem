@@ -43,13 +43,158 @@ class GeneticAlgorithm:
         return best_contestant
 
     def order_crossover(self, parent1_order, parent2_order):
-        pass
+        length = len(parent1_order)
+
+        crossover_points = random.sample(
+            range(length),
+            2
+        )
+
+        crossover_points.sort()
+
+        start = crossover_points[0]
+        end = crossover_points[1]
+
+        child = [None] * length
+
+        for i in range(start, end):
+            child[i] = parent1_order[i]
+
+        child_values = set(
+            parent1_order[start:end]
+        )
+
+        remaining_genes = []
+
+        for offset in range(length):
+            index = (end + offset) % length
+            gene = parent2_order[index]
+
+            if gene not in child_values:
+                remaining_genes.append(gene)
+
+        fill_index = end % length
+
+        for gene in remaining_genes:
+            while child[fill_index] is not None:
+                fill_index = (
+                                     fill_index + 1
+                             ) % length
+
+            child[fill_index] = gene
+
+            fill_index = (
+                                 fill_index + 1
+                         ) % length
+
+        return child
 
     def swap_mutation(self, order):
-        pass
+        mutated_order = order.copy()
+
+        if random.random() < self.mutation_rate:
+            positions = random.sample(range(len(mutated_order)),2)
+
+            i = positions[0]
+            j = positions[1]
+
+            temporary_value = mutated_order[i]
+
+            mutated_order[i] = mutated_order[j]
+            mutated_order[j] = temporary_value
+
+        return mutated_order
 
     def run(self):
-        pass
+        population = self.initialise_population()
+
+        best_solution = None
+        best_fitness = float("inf")
+
+        fitness_history = []
+
+        for i in range(self.max_generations):
+            generation_best_solution = population[0]
+            generation_best_fitness = population[0].fitness(
+                self.instance
+            )
+
+            for j in range(1, len(population)):
+                solution = population[j]
+
+                solution_fitness = solution.fitness(
+                    self.instance
+                )
+
+                if solution_fitness < generation_best_fitness:
+                    generation_best_solution = solution
+                    generation_best_fitness = solution_fitness
+
+            if generation_best_fitness < best_fitness:
+                best_solution = generation_best_solution
+                best_fitness = generation_best_fitness
+
+            fitness_history.append(best_fitness)
+
+            if best_fitness == 0:
+                break
+
+            next_population = []
+
+            if self.elitism_count > 0:
+                ranked_population = sorted(
+                    population,
+                    key=lambda solution: solution.fitness(
+                        self.instance
+                    )
+                )
+
+                for j in range(self.elitism_count):
+                    elite_solution = ranked_population[j]
+
+                    next_population.append(
+                        elite_solution
+                    )
+
+            while len(next_population) < self.population_size:
+                parent1 = self.tournament_select(
+                    population
+                )
+
+                parent2 = self.tournament_select(
+                    population
+                )
+
+                child1_order = self.order_crossover(
+                    parent1.order,
+                    parent2.order
+                )
+
+                child2_order = self.order_crossover(
+                    parent2.order,
+                    parent1.order
+                )
+
+                child1_order = self.swap_mutation(
+                    child1_order
+                )
+
+                child2_order = self.swap_mutation(
+                    child2_order
+                )
+
+                child1 = Solution(child1_order)
+
+                next_population.append(child1)
+
+                if len(next_population) < self.population_size:
+                    child2 = Solution(child2_order)
+
+                    next_population.append(child2)
+
+            population = next_population
+
+        return best_solution, fitness_history
 
 if __name__ == "__main__":
     instances = load_instances()
