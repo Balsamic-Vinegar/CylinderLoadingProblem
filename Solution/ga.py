@@ -1,10 +1,10 @@
 import random
-from core import Solution, load_instances
+from core import Solution, load_instances, evaluate_solution
 import time
 
 class GeneticAlgorithm:
     def __init__(self, instance, population_size=200, mutation_rate=0.015,
-                 tournament_size=4, elitism_count=1, max_generations=500):
+                 tournament_size=4, elitism_count=2, max_generations=500):
         self.instance = instance
         self.population_size = population_size
         self.mutation_rate = mutation_rate
@@ -105,6 +105,37 @@ class GeneticAlgorithm:
 
         return mutated_order
 
+    def local_search(self, order, max_attempts=100):
+        current_order = order.copy()
+
+        current_fitness, current_placements = evaluate_solution(current_order, self.instance)
+
+        for attempt in range(max_attempts):
+
+            if current_fitness == 0:
+                break
+
+            positions = random.sample(range(len(current_order)), 2)
+
+            i = positions[0]
+            j = positions[1]
+
+            candidate_order = current_order.copy()
+
+            candidate_order[i], candidate_order[j] = (
+                candidate_order[j],
+                candidate_order[i]
+            )
+
+            candidate_fitness, candidate_placements = evaluate_solution(candidate_order, self.instance)
+
+            if candidate_fitness < current_fitness:
+                current_order = candidate_order
+                current_fitness = candidate_fitness
+                current_placements = candidate_placements
+
+        return current_order, current_fitness, current_placements
+
     def run(self):
         population = self.initialise_population()
 
@@ -152,18 +183,19 @@ class GeneticAlgorithm:
                 for j in range(self.elitism_count):
                     elite_solution = ranked_population[j]
 
-                    next_population.append(
-                        elite_solution
-                    )
+                    if j == 0:
+                        improved_order, improved_fitness, improved_placements = (
+                            self.local_search(elite_solution.order,max_attempts=50))
+
+                        if improved_fitness < elite_solution.fitness(self.instance):
+                            elite_solution = Solution(improved_order)
+
+                    next_population.append(elite_solution)
 
             while len(next_population) < self.population_size:
-                parent1 = self.tournament_select(
-                    population
-                )
+                parent1 = self.tournament_select(population)
 
-                parent2 = self.tournament_select(
-                    population
-                )
+                parent2 = self.tournament_select(population)
 
                 child1_order = self.order_crossover(
                     parent1.order,
