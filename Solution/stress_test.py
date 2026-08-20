@@ -125,6 +125,11 @@ if __name__ == "__main__":
         f"{len(test_instance.cylinders)}"
     )
 
+    print(
+        f"Order: "
+        f"{best_solution.order}"
+    )
+
     draw_solution(test_instance,best_solution.placements,"GA solution",best_fitness)
 
     fitness, order, placements = greedy_random(test_instance,trials=1000)

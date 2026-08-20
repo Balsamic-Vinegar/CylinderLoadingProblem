@@ -286,7 +286,7 @@ if __name__ == "__main__":
         f"{test_instance.name}..."
     )
 
-    fitness, order, placements = greedy_random(test_instance, trials=50)
+    fitness, order, placements = greedy_random(test_instance, trials=1)
 
     print(f"Best fitness: {fitness:.2f}")
     print(f"Order: {order}")
